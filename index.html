@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo to Text Converter</title>
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📷</text></svg>">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Tesseract.js for OCR -->
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <style>
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+        .dropzone-active {
+            border-color: #3B82F6 !important;
+            background-color: #EFF6FF;
+        }
+        #notification {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            z-index: 50;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .browse-button {
+            background-color: #3B82F6;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .browse-button:hover {
+            background-color: #2563EB;
+            transform: translateY(-1px);
+        }
+        canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Notification -->
+    <div id="notification" class="bg-white shadow-lg"></div>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-camera text-blue-500"></i> Photo to Text
+            </h1>
+            <p class="text-gray-600">Convert your images to text instantly</p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
+            <!-- Upload Section -->
+            <div class="mb-6">
+                <div class="flex items-center justify-center w-full">
+                    <label for="fileInput" class="flex flex-col w-full h-48 border-4 border-dashed border-blue-200 hover:bg-blue-50 hover:border-blue-300 rounded-lg cursor-pointer transition-all">
+                        <div class="flex flex-col items-center justify-center pt-7">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-blue-500 mb-4"></i>
+                            <p class="text-gray-700 text-lg mb-2">Drop your image here or</p>
+                            <button class="browse-button">
+                                <i class="fas fa-folder-open mr-2"></i>Browse Files
+                            </button>
+                        </div>
+                        <input type="file" id="fileInput" class="hidden" accept="image/*" />
+                    </label>
+                </div>
+                <p class="text-center text-sm text-gray-500 mt-2">Supports: JPG, PNG, GIF</p>
+            </div>
+
+            <!-- Preview Section -->
+            <div id="previewSection" class="hidden mb-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">Image Preview</h3>
+                <div class="relative">
+                    <img id="imagePreview" class="w-full rounded-lg shadow-sm" src="" alt="Preview" />
+                    <button onclick="clearImage()" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Image Processing Options -->
+            <div id="processingOptions" class="hidden mb-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">Processing Options</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="grayscale" class="mr-2" checked>
+                        <label for="grayscale">Convert to Grayscale</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="sharpen" class="mr-2" checked>
+                        <label for="sharpen">Sharpen Image</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="numbers" class="mr-2" checked>
+                        <label for="numbers">Optimize for Numbers</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="contrast" class="mr-2" checked>
+                        <label for="contrast">Enhance Contrast</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Convert Button -->
+            <button id="convertBtn" onclick="convertToText()" class="w-full bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors hidden">
+                <i class="fas fa-magic mr-2"></i>Convert to Text
+            </button>
+
+            <!-- Loading Spinner -->
+            <div id="loadingSpinner" class="hidden">
+                <div class="flex items-center justify-center py-4">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                </div>
+                <p class="text-center text-gray-600">Converting your image to text...</p>
+                <p id="progressText" class="text-center text-sm text-gray-500 mt-2"></p>
+            </div>
+
+            <!-- Result Section -->
+            <div id="resultSection" class="hidden mt-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">Extracted Text</h3>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <textarea id="resultText" class="w-full h-40 bg-transparent border-none resize-none focus:ring-0" readonly></textarea>
+                </div>
+                <div class="flex gap-3 mt-4">
+                    <button onclick="copyText()" class="flex-1 bg-green-500 text-white py-2 rounded-lg font-medium hover:bg-green-600 transition-colors">
+                        <i class="fas fa-copy mr-2"></i>Copy Text
+                    </button>
+                    <button onclick="downloadText()" class="flex-1 bg-purple-500 text-white py-2 rounded-lg font-medium hover:bg-purple-600 transition-colors">
+                        <i class="fas fa-download mr-2"></i>Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="preprocessCanvas"></canvas>
+
+    <script>
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.className = type === 'success' 
+                ? 'bg-green-100 text-green-800 border-l-4 border-green-500'
+                : 'bg-red-100 text-red-800 border-l-4 border-red-500';
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Handle file input change
+        document.getElementById('fileInput').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                try {
+                    await processSelectedFile(file);
+                    showNotification('Image loaded successfully!');
+                    document.getElementById('processingOptions').classList.remove('hidden');
+                } catch (error) {
+                    console.error('Error processing file:', error);
+                    showNotification('Error loading image. Please try again.', 'error');
+                }
+            } else {
+                showNotification('Please select a valid image file.', 'error');
+            }
+        });
+
+        // Process selected file
+        async function processSelectedFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const img = new Image();
+                        img.onload = function() {
+                            document.getElementById('imagePreview').src = e.target.result;
+                            document.getElementById('previewSection').classList.remove('hidden');
+                            document.getElementById('convertBtn').classList.remove('hidden');
+                            document.getElementById('resultSection').classList.add('hidden');
+                            resolve();
+                        };
+                        img.onerror = function() {
+                            reject(new Error('Invalid image file'));
+                        };
+                        img.src = e.target.result;
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.onerror = () => reject(new Error('Error reading file'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Preprocess image
+        function preprocessImage(imageElement) {
+            const canvas = document.getElementById('preprocessCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size to match image
+            canvas.width = imageElement.naturalWidth;
+            canvas.height = imageElement.naturalHeight;
+            
+            // Draw original image
+            ctx.drawImage(imageElement, 0, 0);
+            
+            // Get image data
+            let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            let data = imageData.data;
+            
+            // Apply selected preprocessing steps
+            if (document.getElementById('grayscale').checked) {
+                for (let i = 0; i < data.length; i += 4) {
+                    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                    data[i] = data[i + 1] = data[i + 2] = avg;
+                }
+            }
+            
+            if (document.getElementById('contrast').checked) {
+                const factor = 1.5; // Contrast factor
+                for (let i = 0; i < data.length; i += 4) {
+                    data[i] = factor * (data[i] - 128) + 128;
+                    data[i + 1] = factor * (data[i + 1] - 128) + 128;
+                    data[i + 2] = factor * (data[i + 2] - 128) + 128;
+                }
+            }
+            
+            // Apply changes back to canvas
+            ctx.putImageData(imageData, 0, 0);
+            
+            return canvas.toDataURL();
+        }
+
+        // Clear selected image
+        function clearImage() {
+            document.getElementById('fileInput').value = '';
+            document.getElementById('previewSection').classList.add('hidden');
+            document.getElementById('processingOptions').classList.add('hidden');
+            document.getElementById('convertBtn').classList.add('hidden');
+            document.getElementById('resultSection').classList.add('hidden');
+            showNotification('Image cleared');
+        }
+
+        // Convert image to text
+        async function convertToText() {
+            const imagePreview = document.getElementById('imagePreview');
+            if (!imagePreview.src) return;
+
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const convertBtn = document.getElementById('convertBtn');
+            const progressText = document.getElementById('progressText');
+            
+            loadingSpinner.classList.remove('hidden');
+            convertBtn.classList.add('hidden');
+
+            try {
+                // Preprocess the image
+                const processedImageUrl = preprocessImage(imagePreview);
+
+                // Configure Tesseract options
+                const config = {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            progressText.textContent = `Progress: ${Math.round(m.progress * 100)}%`;
+                        }
+                    }
+                };
+
+                // Add number-specific configuration if selected
+                if (document.getElementById('numbers').checked) {
+                    config.tessedit_char_whitelist = '0123456789.,';
+                }
+
+                const result = await Tesseract.recognize(
+                    processedImageUrl,
+                    'eng',
+                    config
+                );
+
+                document.getElementById('resultText').value = result.data.text;
+                loadingSpinner.classList.add('hidden');
+                document.getElementById('resultSection').classList.remove('hidden');
+                showNotification('Text extracted successfully!');
+            } catch (error) {
+                console.error('Tesseract Error:', error);
+                loadingSpinner.classList.add('hidden');
+                convertBtn.classList.remove('hidden');
+                showNotification('Error extracting text. Please try again.', 'error');
+            }
+        }
+
+        // Copy text to clipboard
+        function copyText() {
+            const textarea = document.getElementById('resultText');
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showNotification('Text copied to clipboard!');
+            } catch (err) {
+                console.error('Copy failed:', err);
+                showNotification('Failed to copy text.', 'error');
+            }
+        }
+
+        // Download text as file
+        function downloadText() {
+            const text = document.getElementById('resultText').value;
+            if (!text) {
+                showNotification('No text to download.', 'error');
+                return;
+            }
+
+            try {
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'extracted-text.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                showNotification('Text downloaded successfully!');
+            } catch (error) {
+                console.error('Download failed:', error);
+                showNotification('Failed to download text.', 'error');
+            }
+        }
+
+        // Handle drag and drop
+        const dropZone = document.querySelector('label');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.classList.add('dropzone-active');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('dropzone-active');
+        }
+
+        dropZone.addEventListener('drop', async function(e) {
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+            
+            if (file && file.type.startsWith('image/')) {
+                try {
+                    await processSelectedFile(file);
+                    showNotification('Image dropped successfully!');
+                    document.getElementById('processingOptions').classList.remove('hidden');
+                } catch (error) {
+                    console.error('Error processing dropped file:', error);
+                    showNotification('Error loading dropped image.', 'error');
+                }
+            } else {
+                showNotification('Please drop a valid image file.', 'error');
+            }
+        });
+
+        // Initialize with a welcome notification
+        window.addEventListener('load', () => {
+            showNotification('Ready to convert your images to text!');
+        });
+    </script>
+</body>
+</html>
