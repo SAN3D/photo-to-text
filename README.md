@@ -1,29 +1,88 @@
 # Photo to Text Converter
 
-A modern web application that converts text from images using OCR technology. Built with HTML, JavaScript, and Tailwind CSS.
+A modern web application that converts text from images using OCR technology. This application uses advanced image preprocessing and Tesseract.js for accurate text extraction from images.
 
-## Features
+## 🌟 Features
 
-- Upload images via drag & drop or file browser
-- Image preprocessing options for better accuracy
-- Real-time OCR with progress indicator
-- Support for JPG, PNG, and GIF formats
-- Copy to clipboard & download functionality
-- Mobile-responsive design
+- **Image Upload**
+  - Drag & drop functionality
+  - File browser support
+  - Support for JPG, PNG, GIF formats
 
-## Usage
+- **Advanced Processing**
+  - Grayscale conversion
+  - Contrast enhancement
+  - Image sharpening
+  - Number optimization mode
 
-1. Visit the live demo: [Photo to Text Converter](https://YOUR_USERNAME.github.io/photo-to-text/)
-2. Upload an image by dragging and dropping or using the browse button
-3. Adjust preprocessing options if needed
-4. Click "Convert to Text" to extract text
-5. Copy or download the extracted text
+- **User-Friendly Interface**
+  - Real-time progress indicator
+  - Modern, responsive design
+  - Instant copy to clipboard
+  - Download extracted text
+  - Processing options panel
 
-## Technologies Used
+## 🚀 Live Demo
 
-- HTML5
-- JavaScript (ES6+)
-- Tailwind CSS
-- Tesseract.js v5
-- Font Awesome
-- Google Fonts
+Visit the live application: [Photo to Text Converter](https://your-username.github.io/photo-to-text/)
+
+## 💻 Technologies Used
+
+- HTML5 & Modern JavaScript
+- Tailwind CSS for styling
+- Tesseract.js v5 for OCR
+- Font Awesome icons
+- Google Fonts (Poppins)
+
+## 📋 Usage Guide
+
+1. **Upload Image**
+   - Drag and drop an image onto the upload area, or
+   - Click "Browse Files" to select an image
+
+2. **Configure Processing** (Optional)
+   - Enable/disable grayscale conversion
+   - Adjust contrast enhancement
+   - Toggle number optimization
+   - Enable image sharpening
+
+3. **Convert**
+   - Click "Convert to Text"
+   - Wait for processing to complete
+   - View extracted text
+
+4. **Manage Results**
+   - Copy text to clipboard
+   - Download as text file
+   - Clear and start over
+
+## 🛠️ Development
+
+This project uses GitHub Actions for automated deployment to GitHub Pages. The deployment workflow is configured in `.github/workflows/deploy.yml`.
+
+### Local Development
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/photo-to-text.git
+   cd photo-to-text
+   ```
+
+2. Serve the files locally:
+   ```bash
+   python3 -m http.server 8000
+   ```
+
+3. Open `http://localhost:8000` in your browser
+
+## 📝 License
+
+MIT License - feel free to use this project for personal or commercial purposes.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📬 Contact
+
+If you have any questions or suggestions, please open an issue in the GitHub repository.
