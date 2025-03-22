@@ -24,7 +24,7 @@ A modern web application that converts text from images using OCR technology. Th
 
 ## 🚀 Live Demo
 
-Visit the live application: [Photo to Text Converter](https://your-username.github.io/photo-to-text/)
+Visit the live application: [Photo to Text Converter](https://san3d.github.io/photo-to-text/)
 
 ## 💻 Technologies Used
 
@@ -64,7 +64,7 @@ This project uses GitHub Actions for automated deployment to GitHub Pages. The d
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/photo-to-text.git
+   git clone https://github.com/SAN3D/photo-to-text.git
    cd photo-to-text
    ```
 
